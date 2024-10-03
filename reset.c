@@ -197,11 +197,13 @@ int reset_init(struct morsectrl *mors, struct mm_argtable *mm_args)
 #ifndef MORSE_WIN_BUILD
     if (!morsectrl_transport_has_reset(mors->transport))
     {
-        MM_INIT_ARGTABLE(mm_args, args.softreset, args.gpio);
+        MM_INIT_ARGTABLE(mm_args, "Send reset signal over RPi GPIO pin", args.softreset, args.gpio
+        ); /* NOLINT (whitespace/parens) */
     }
     else
     {
-        MM_INIT_ARGTABLE(mm_args, args.softreset);
+        MM_INIT_ARGTABLE(mm_args, "Send reset signal over libmpsse GPIO pin", args.softreset
+        ); /* NOLINT (whitespace/parens) */
     }
 #endif
 
@@ -213,6 +215,9 @@ int reset(struct morsectrl *mors, int argc, char *argv[])
     int ret;
     int reset_gpio = 0;
     bool do_soft_reset = (args.softreset->count > 0);
+
+#ifndef MORSE_WIN_BUILD
+#endif
 
     if (do_soft_reset)
     {

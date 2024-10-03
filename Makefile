@@ -26,7 +26,7 @@ Q = @
 endif
 
 
-override MORSECTRL_VERSION_STRING = "rel_1_11_5_2024_Jul_23-4-g42644dc"
+override MORSECTRL_VERSION_STRING = "rel_1_12_5_2024_Jul_25-4-g3541610"
 DEFAULT_INTERFACE_NAME ?= "wlan0"
 
 MORSECTRL_CFLAGS = $(CFLAGS)
@@ -68,6 +68,7 @@ SRCS += standby.c
 SRCS += mpsw.c
 SRCS += dhcpc.c
 SRCS += keep_alive.c
+SRCS += tcp_keepalive.c
 SRCS += vendor_ie.c
 SRCS += twt.c
 SRCS += cac.c
@@ -79,6 +80,9 @@ SRCS += params.c
 SRCS += uapsd.c
 SRCS += dynamic_peering.c
 SRCS += li.c
+SRCS += whitelist.c
+SRCS += arp_periodic_refresh.c
+SRCS += otp.c
 
 SRCS += transport/transport.c
 
@@ -136,6 +140,7 @@ ifeq ($(CONFIG_MORSE_TRANS_FTDI_SPI),1)
 	LINUX_CFLAGS += -D_GNU_SOURCE
 	LINUX_LDFLAGS += -lpthread -lrt -ldl
 endif
+
 
 MORSE_CLI_CFLAGS = $(MORSECTRL_CFLAGS)
 MORSE_CLI_LDFLAGS = $(MORSECTRL_LDFLAGS)

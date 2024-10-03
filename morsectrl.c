@@ -146,7 +146,7 @@ int main(int argc, char *argv[])
     qsort(__start_cli_handlers, (__stop_cli_handlers - __start_cli_handlers),
           sizeof(struct command_handler), cmdname_cmp);
 
-    MM_INIT_ARGTABLE((&main_args),
+    MM_INIT_ARGTABLE((&main_args), NULL,
                      args.debug = arg_lit0("d", "debug", "show debug messages for given command"),
                      args.iface = arg_str0("i", "interface", NULL,
                                            "specify the interface for the transport "

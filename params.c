@@ -45,6 +45,12 @@ enum morse_param_id
     MORSE_PARAM_ID_POWERSAVE_TYPE                   = 4,
     MORSE_PARAM_ID_SNOOZE_ADJUST                    = 5,
     MORSE_PARAM_ID_TX_BLOCK                         = 6,
+    MORSE_PARAM_ID_FORCED_SNOOZE_PERIOD_US          = 7,
+    MORSE_PARAM_ID_WAKE_ACTION_GPIO                 = 8,
+    MORSE_PARAM_ID_WAKE_ACTION_GPIO_PULSE_MS        = 9,
+    MORSE_PARAM_ID_CONNECTION_MONITOR_GPIO          = 10,
+    MORSE_PARAM_ID_INPUT_TRIGGER_GPIO               = 11,
+    MORSE_PARAM_ID_INPUT_TRIGGER_MODE               = 12,
 
     MORSE_PARAM_ID_LAST,
     MORSE_PARAM_ID_MAX = UINT32_MAX,
@@ -138,8 +144,6 @@ static int param_get_uint32(const struct param_entry* entry, struct command_para
     return 0;
 }
 
-
-#if !defined (MORSE_CLIENT)
 static int param_set_int32(const struct param_entry* entry, char* value,
     struct command_param_req* req)
 {
@@ -163,7 +167,6 @@ static int param_get_int32(const struct param_entry* entry, struct command_param
     mctrl_print("%d\n", (int32_t)(resp->value));
     return 0;
 }
-#endif
 
 /* Help strings for parameters should not have line control characters (e.g. '\n') embedded
  * within.
@@ -188,6 +191,55 @@ struct param_entry params[] = {
         .max_val = UINT32_MAX,
         .set_fn = param_set_uint32,
         .get_fn = param_get_uint32,
+    },
+    {
+        .id = MORSE_PARAM_ID_WAKE_ACTION_GPIO,
+        .name = "wake_action_gpio",
+        .help = "Specify GPIO to pulse on reception of a Morse Micro "
+                "wake action frame (-1 to disable).",
+        .min_val = (uint32_t) -1,
+        .max_val = INT32_MAX,
+        .set_fn = param_set_int32,
+        .get_fn = param_get_int32,
+    },
+    {
+        .id = MORSE_PARAM_ID_WAKE_ACTION_GPIO_PULSE_MS,
+        .name = "wake_action_gpio_pulse",
+        .help = "Time to hold wake action GPIO high after reception of "
+                "a morse micro wake action frame (ms).",
+        .min_val = 50,
+        .max_val = UINT32_MAX,
+        .set_fn = param_set_uint32,
+        .get_fn = param_get_uint32,
+    },
+    {
+        .id = MORSE_PARAM_ID_CONNECTION_MONITOR_GPIO,
+        .name = "connection_monitor_gpio",
+        .help = "Specify GPIO that monitors and reflects device's "
+                "802.11 connection status (-1 to disable).",
+        .min_val = (uint32_t) -1,
+        .max_val = INT32_MAX,
+        .set_fn = param_set_int32,
+        .get_fn = param_get_int32,
+    },
+    {
+        .id = MORSE_PARAM_ID_INPUT_TRIGGER_GPIO,
+        .name = "input_trigger_gpio",
+        .help = "Specify GPIO that listens for an input signal to "
+                "wake an external host (-1 to disable).",
+        .min_val = (uint32_t) -1,
+        .max_val = INT32_MAX,
+        .set_fn = param_set_int32,
+        .get_fn = param_get_int32,
+    },
+    {
+        .id = MORSE_PARAM_ID_INPUT_TRIGGER_MODE,
+        .name = "input_trigger_mode",
+        .help = "Specify the active mode (high or low) for the trigger GPIO",
+        .min_val = (uint32_t) -1,
+        .max_val = INT32_MAX,
+        .set_fn = param_set_int32,
+        .get_fn = param_get_int32,
     },
 };
 

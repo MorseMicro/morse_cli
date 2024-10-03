@@ -26,6 +26,7 @@ extern char TOOL_NAME[];
 
 struct mm_argtable {
     int count;
+    const char *desc;
     struct arg_lit *help;
     struct arg_end *end;
     void **argtable;
@@ -37,6 +38,8 @@ static inline void mm_help_argtable(const char *name, struct mm_argtable *mm_arg
 {
     mctrl_print("\t%s", name);
     arg_print_syntax(stdout, mm_args->argtable, "\n");
+    if (mm_args->desc)
+        mctrl_print("\t\t%s\n", mm_args->desc);
     arg_print_glossary(stdout, mm_args->argtable, "\t\t%-40s %s\n");
 }
 
@@ -51,6 +54,8 @@ static inline int mm_parse_argtable_noerror(const char *name, struct mm_argtable
     {
         mctrl_print("%s %s", TOOL_NAME, name ? name : "");
         arg_print_syntax(stdout, mm_args->argtable, "\n");
+        if (mm_args->desc)
+            mctrl_print("\t%s\n", mm_args->desc);
         arg_print_glossary(stdout, mm_args->argtable, "\t%-40s %s\n");
         return -1;
     }
@@ -79,17 +84,17 @@ static inline void mm_free_argtable(struct mm_argtable *mm_args)
 }
 
 // NOLINT(-whitespace/comma)
-#define MM_INIT_ARGTABLE(_argtable, ...)                                    \
-    do {                                                                    \
-        _argtable->end = arg_end(20);                                       \
-        void *tmp_table[] = {                                               \
-            _argtable->help = arg_lit0("h", "help",                         \
-                                    "display this help and exit"),          \
-            __VA_ARGS__ __VA_OPT__(,)                                       \
-            _argtable->end                                                  \
-        };                                                                  \
-        _argtable->argtable = malloc(sizeof(tmp_table));                    \
-        memcpy(_argtable->argtable, tmp_table, sizeof(tmp_table));          \
-        _argtable->count = sizeof(tmp_table) / sizeof(_argtable->end);      \
+#define MM_INIT_ARGTABLE(_argtable, _desc, ...) \
+    do { \
+        void *tmp_table[] = {                                       \
+            _argtable->help = arg_lit0("h", "help", \
+                                       "display this help and exit"), \
+            __VA_ARGS__ __VA_OPT__(,)                                   \
+            _argtable->end = arg_end(20)                                 \
+    };                                                                  \
+        _argtable->desc = _desc;                                        \
+        _argtable->argtable = malloc(sizeof(tmp_table));                \
+        memcpy(_argtable->argtable, tmp_table, sizeof(tmp_table));      \
+        _argtable->count = sizeof(tmp_table) / sizeof(_argtable->end);  \
     } while (0)
 // NOLINT(+whitespace/comma)

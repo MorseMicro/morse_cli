@@ -45,12 +45,14 @@ typedef enum
     STANDBY_MODE_CMD_EXIT = 0x0,
     /** The external host is indicating that it's going into standby mode */
     STANDBY_MODE_CMD_ENTER,
-    /** The external host sets a number of configuration options for standby mode */
-    STANDBY_MODE_CMD_SET_CONFIG,
+    /** This version of the config command has since been deprecated */
+    STANDBY_MODE_CMD_SET_CONFIG_V1_DEPRECATED,
     /** The external host provides a payload that gets appended to status frames */
     STANDBY_MODE_CMD_SET_STATUS_PAYLOAD,
     /** The external host provides a filter to be applied to incoming standby wake frames */
     STANDBY_MODE_CMD_SET_WAKE_FILTER,
+    /** The external host sets a number of configuration options for standby mode */
+    STANDBY_MODE_CMD_SET_CONFIG_V2,
 
     /** Force enum to UINT32 */
     STANDBY_MODE_CMD_MAX = UINT32_MAX,
@@ -70,6 +72,12 @@ struct PACKED command_standby_set_config
     ipv4_addr_t dst_ip;
     /** Destination UDP Port */
     uint16_t dst_port;
+    /** pad to word boundary */
+    uint8_t pad[2];
+    /** Time in seconds to increment each successive deep sleep */
+    uint32_t deep_sleep_increment_s;
+    /** Max time to deep sleep for */
+    uint32_t deep_sleep_max_s;
 };
 
 struct PACKED command_standby_set_wake_filter
@@ -157,7 +165,7 @@ static int standby_get_cmd(char str[])
 {
     if (strcmp("enter", str) == 0) return STANDBY_MODE_CMD_ENTER;
     else if (strcmp("exit", str) == 0) return STANDBY_MODE_CMD_EXIT;
-    else if (strcmp("config", str) == 0) return STANDBY_MODE_CMD_SET_CONFIG;
+    else if (strcmp("config", str) == 0) return STANDBY_MODE_CMD_SET_CONFIG_V2;
     else if (strcmp("payload", str) == 0) return STANDBY_MODE_CMD_SET_STATUS_PAYLOAD;
     else
     {
@@ -167,13 +175,14 @@ static int standby_get_cmd(char str[])
 
 static void usage(struct morsectrl *mors)
 {
-    mctrl_print("\tstandby <command>\n");
+    mctrl_print("\tstandby <command> [options]\n");
+    mctrl_print("\t\tenter [<session dir>]\n"
+                "\t\t\tPut the STA FW into standby mode.\n");
     mctrl_print(
-           "\t\tenter <session dir>\tPut the STA FW into standby mode. Once entered, the STA "
-           "will continue to notify its standby state to AP until reboot.\n"
-           "\t\t\t <session dir> The full directory path for storing persistent sessions, "
-           "which should be obtained from the wpa_supplicant standby_config_dir configuration "
-           "parameter\n");
+           "\t\t<session dir>\tThe full directory path for storing persistent sessions,\n"
+           "\t\t\twhich should be obtained from the wpa_supplicant standby_config_dir\n"
+           "\t\t\tconfiguration parameter. This parameter is no longer required\n"
+           "\t\t\tand is retained for backwards compatibility.\n");
     mctrl_print("\t\texit \tTell the STA FW that the external host is awake.\n");
     mctrl_print("\t\tpayload\t<hex string of user data to append to standby status frames>\n");
     mctrl_print("\t\tconfig\t <config file>\t Configure standby mode\n"
@@ -253,6 +262,24 @@ static int parse_standby_config_keyval(struct morsectrl *mors, void *context, co
         config->set_cfg->dst_port = htole16((uint16_t) temp);
         return 0;
     }
+    else if (strcmp("deep_sleep_increment_s", key) == 0)
+    {
+        if (str_to_uint32(val, &temp) < 0)
+        {
+            goto error;
+        }
+        config->set_cfg->deep_sleep_increment_s = htole32(temp);
+        return 0;
+    }
+    else if (strcmp("deep_sleep_max_s", key) == 0)
+    {
+        if (str_to_uint32(val, &temp) < 0)
+        {
+            goto error;
+        }
+        config->set_cfg->deep_sleep_max_s = htole32(temp);
+        return 0;
+    }
     else if (strcmp("wake_packet_filter", key) == 0)
     {
         uint32_t len = MIN(strlen(val) / 2, MORSE_ARRAY_SIZE(config->filter_cfg->filter));
@@ -269,7 +296,6 @@ static int parse_standby_config_keyval(struct morsectrl *mors, void *context, co
         config->filter_cfg->offset = htole32(temp);
         return 0;
     }
-
     mctrl_err("Key is not a recognised parameter: %s\n", key);
     return 0;
 
@@ -504,10 +530,15 @@ static int process_standby_enter(struct morsectrl *mors,
     struct morsectrl_transport_buff *cmd_tbuff;
     struct morsectrl_transport_buff *rsp_tbuff;
 
-    if (argc != 3)
+    if (argc < 2 || argc > 3)
     {
         mctrl_err("Invalid number of arguments\n");
         return -1;
+    }
+
+    if (argc == 2)
+    {
+        return 0;
     }
 
     standby_session_dir = argv[2];
@@ -712,7 +743,9 @@ static int process_set_config_cmd(struct morsectrl *mors, struct command_standby
         .notify_period_s = 15,
         .dst_ip.as_u32 = 0,
         .dst_port = 22000,
-        .src_ip.as_u32 = 0
+        .src_ip.as_u32 = 0,
+        .deep_sleep_increment_s = 0, /* Default no increment */
+        .deep_sleep_max_s = UINT32_MAX, /* Default max int / no max */
     };
 
     memcpy(&cmd->config, &config_default, sizeof(config_default));
@@ -828,7 +861,7 @@ int standby(struct morsectrl *mors, int argc, char *argv[])
 
     switch (cmd->cmd)
     {
-        case STANDBY_MODE_CMD_SET_CONFIG:
+        case STANDBY_MODE_CMD_SET_CONFIG_V2:
         {
             if (process_set_config_cmd(mors, cmd, argc, argv))
             {
@@ -870,6 +903,7 @@ int standby(struct morsectrl *mors, int argc, char *argv[])
                 usage(mors);
                 goto exit;
             }
+            mctrl_print("Enter standby\n");
             break;
         }
         case STANDBY_MODE_CMD_EXIT:

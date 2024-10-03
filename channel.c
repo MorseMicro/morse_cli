@@ -42,7 +42,7 @@ static struct
 
 int channel_init(struct morsectrl *mors, struct mm_argtable *mm_args)
 {
-    MM_INIT_ARGTABLE(mm_args,
+    MM_INIT_ARGTABLE(mm_args, "Set or get channel parameters",
                      args.all_channels = arg_lit0("a", NULL, "prints all the channel "
                                                   "information i.e. full, DTIM, and current"),
                      args.frequency = arg_int0("c", NULL, "<freq>",

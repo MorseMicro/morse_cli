@@ -573,7 +573,7 @@ static int load_blobs(struct morsectrl *mors, FILE *firmware, Elf32_Ehdr *ehdr)
 
 int load_elf_init(struct morsectrl *mors, struct mm_argtable *mm_args)
 {
-    MM_INIT_ARGTABLE(mm_args,
+    MM_INIT_ARGTABLE(mm_args, "Read an ELF file and load it onto a chip",
                      args.file = arg_file1("f", "file", NULL, "filename of the elf file to load"),
                      args.load_bcf = arg_lit0("b", "bcf", "load a BCF (Board Configuration File)"),
                      args.country = arg_rex0("c", "country", "([A-Z]{2})", "country code", 0,

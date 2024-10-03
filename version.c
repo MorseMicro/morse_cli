@@ -38,7 +38,7 @@ struct PACKED get_version_response
 
 int version_init(struct morsectrl *mors, struct mm_argtable *mm_args)
 {
-    MM_INIT_ARGTABLE(mm_args);
+    MM_INIT_ARGTABLE(mm_args, "Read the software versions");
     return 0;
 }
 

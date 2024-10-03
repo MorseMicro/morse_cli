@@ -212,6 +212,8 @@ static void print_mac_state(const char *key, const uint8_t *buf, uint32_t len)
 }
 
 
+
+
 static void print_default(const char *key, const uint8_t *buf, uint32_t len)
 {
     /* Not implemented prior, use default hexdump in previous switch statement */

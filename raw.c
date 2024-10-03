@@ -130,7 +130,7 @@ static struct {
 
 int raw_init(struct morsectrl *mors, struct mm_argtable *mm_args)
 {
-    MM_INIT_ARGTABLE(mm_args,
+    MM_INIT_ARGTABLE(mm_args, "Configure Restricted Access Window parameters",
         args.slot_def = arg_csi0("s", "slot_def", "<RAW duration (usec)>,<number of slots>", 2,
             "Slot definition of RAW assignment. Required for new configs."),
         args.cross_slot = arg_lit0("x", "cross_slot",

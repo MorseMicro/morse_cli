@@ -354,7 +354,7 @@ static void dump_stats_types(struct morsectrl *mors)
 
 int stats_init(struct morsectrl *mors, struct mm_argtable *mm_args)
 {
-    MM_INIT_ARGTABLE(mm_args,
+    MM_INIT_ARGTABLE(mm_args, "Read statistics from the chip",
                      args.apps_core = arg_lit0("a", NULL, "read statistics from the Apps core"),
                      args.mac_core = arg_lit0("m", NULL, "read statistics from the MAC core"),
                      args.phy_core = arg_lit0("u", NULL, "read statistics from the PHY core"),

@@ -335,6 +335,9 @@ static void print_mac_state(const char *key, const uint8_t *buf, uint32_t len)
     printf_indent("}");
 }
 
+
+
+
 static void print_default(const char *key, const uint8_t *buf, uint32_t len)
 {
     printf_indent("\"%s\": ", key);

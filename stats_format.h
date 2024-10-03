@@ -136,6 +136,7 @@ typedef struct
     uint64_t max_t_off;
 } duty_cycle_stats_t;
 
+
 struct PACKED stats_response
 {
     /** The contents of the response */

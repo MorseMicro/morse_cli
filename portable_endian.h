@@ -18,6 +18,11 @@
 
 #pragma once
 
+#include <stdint.h>
+
+typedef uint16_t be16_t;
+typedef uint32_t be32_t;
+
 #if (defined(_WIN16) || defined(_WIN32) || defined(_WIN64)) && !defined(__WINDOWS__)
 
 #define __WINDOWS__
