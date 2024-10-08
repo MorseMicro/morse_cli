@@ -89,7 +89,7 @@ static inline void mm_free_argtable(struct mm_argtable *mm_args)
         void *tmp_table[] = {                                       \
             _argtable->help = arg_lit0("h", "help", \
                                        "display this help and exit"), \
-            __VA_ARGS__ __VA_OPT__(,)                                   \
+            ##__VA_ARGS__,                                            \
             _argtable->end = arg_end(20)                                 \
     };                                                                  \
         _argtable->desc = _desc;                                        \
