@@ -85,6 +85,11 @@ struct morsectrl_transport_ops
     int (*reset_device)(struct morsectrl_transport *transport);
     /** Retrieve the interface name, if supported (optional; may be NULL if not supported). */
     const char *(*get_ifname)(struct morsectrl_transport *transport);
+    /** Send connect command to the chip, implemented only on NL80211. */
+    int (*connect)(struct morsectrl_transport *transport,
+                   const char *ssid, size_t ssid_len,
+                   const char *pwd, size_t pwd_len,
+                   bool secure);
 };
 
 /**

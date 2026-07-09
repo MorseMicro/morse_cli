@@ -7,7 +7,6 @@
 
 #include <stdbool.h>
 #include "utilities.h"
-#include "transport/transport.h"
 #include "mm_argtable3.h"
 
 #define MORSE_ARRAY_SIZE(array) (sizeof((array)) / sizeof((array[0])))
@@ -75,13 +74,13 @@ struct MM_CLI_HANDLER_ALIGN command_handler
 };
 
 #define __MM_CLI_HANDLER(\
-    command, _is_intf_cmd, _direct_chip_supported_cmd, deprecated, custom_help) \
+    command, command_func, _is_intf_cmd, _direct_chip_supported_cmd, deprecated, custom_help) \
     int command##_init(struct morsectrl *mors, struct mm_argtable *mmargs); \
     __attribute__((section("cli_handlers"))) MM_CLI_HANDLER_ALIGN \
     struct command_handler command##_cli_handler = { \
         #command, \
         command##_init, \
-        command, \
+        command_func, \
         command##_help, \
         _is_intf_cmd, \
         _direct_chip_supported_cmd, \
@@ -89,15 +88,20 @@ struct MM_CLI_HANDLER_ALIGN command_handler
         custom_help }
 
 #define _MM_CLI_HANDLER( \
-    command, _is_intf_cmd, _direct_chip_supported_cmd, deprecated, custom_help) \
+    command, command_func, _is_intf_cmd, _direct_chip_supported_cmd, deprecated, custom_help) \
     int command##_help(void) { return 0; } \
-    __MM_CLI_HANDLER(command, _is_intf_cmd, _direct_chip_supported_cmd, deprecated, custom_help)
+    __MM_CLI_HANDLER(command, command_func, _is_intf_cmd, \
+        _direct_chip_supported_cmd, deprecated, custom_help)
 
 #define MM_CLI_HANDLER(command, _is_intf_cmd, _direct_chip_supported_cmd) \
-    _MM_CLI_HANDLER(command, _is_intf_cmd, _direct_chip_supported_cmd, false, false)
+    _MM_CLI_HANDLER(command, command, _is_intf_cmd, _direct_chip_supported_cmd, false, false)
+
+#define MM_CLI_HANDLER_CUSTOM_FUNC(\
+    command, command_func, _is_intf_cmd, _direct_chip_supported_cmd) \
+    _MM_CLI_HANDLER(command, command_func, _is_intf_cmd, _direct_chip_supported_cmd, false, false)
 
 #define MM_CLI_HANDLER_DEPRECATED(command, _is_intf_cmd, _direct_chip_supported_cmd) \
-    _MM_CLI_HANDLER(command, _is_intf_cmd, _direct_chip_supported_cmd, true, false)
+    _MM_CLI_HANDLER(command, command, _is_intf_cmd, _direct_chip_supported_cmd, true, false)
 
 #define MM_CLI_HANDLER_CUSTOM_HELP(command, _is_intf_cmd, _direct_chip_supported_cmd) \
-    __MM_CLI_HANDLER(command, _is_intf_cmd, _direct_chip_supported_cmd, false, true)
+    __MM_CLI_HANDLER(command, command, _is_intf_cmd, _direct_chip_supported_cmd, false, true)

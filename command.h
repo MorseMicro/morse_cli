@@ -16,6 +16,7 @@
 #include "portable_endian.h"
 #include "morsectrl.h"
 #include "morse_commands.h"
+#include "transport/transport.h"
 
 /** The maximum size of a confirm packet. */
 #define MORSE_CMD_CFM_LEN 1584
