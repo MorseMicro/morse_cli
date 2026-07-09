@@ -20,7 +20,7 @@
 #define PACKED                 __attribute__((packed))
 
 #define MORSE_CMD_SEMVER_MAJOR 57
-#define MORSE_CMD_SEMVER_MINOR 2
+#define MORSE_CMD_SEMVER_MINOR 3
 #define MORSE_CMD_SEMVER_PATCH 0
 
 #define MORSE_CMD_TYPE_REQ     BIT(0)
@@ -64,6 +64,11 @@ enum morse_cmd_id
     MORSE_CMD_ID_FORCE_POWER_MODE = 0x0048,
     MORSE_CMD_ID_NET_IP = 0x004D,
     MORSE_CMD_ID_TCP_PERIODIC = 0x004E,
+
+    /* HMI commands starting at 0x0780 */
+    MORSE_CMD_ID_HMI_CREATE_LINK = 0x0780,
+    MORSE_CMD_ID_HMI_CREATE_TRIGGER = 0x0781,
+    MORSE_CMD_ID_HMI_CREATE_ACTION = 0x0782,
 
     /* Stats commands starting at 0x2000 */
     MORSE_CMD_ID_HOST_STATS_LOG = 0x2007,
@@ -1259,6 +1264,100 @@ struct PACKED morse_cmd_req_tcp_periodic
         struct morse_cmd_tcp_periodic_config configure;
         struct morse_cmd_tcp_periodic_connect connect;
     };
+};
+
+/**
+ * @brief Request message for HMI_CREATE_LINK
+ *
+ * Link a trigger and an action in the HMI subsystem.
+ */
+struct PACKED morse_cmd_req_hmi_create_link
+{
+    /** ID of the trigger. */
+    uint8_t trigger_id;
+    /** ID of the action. */
+    uint8_t action_id;
+};
+
+/**
+ * @brief Response message for HMI_CREATE_LINK
+ */
+struct PACKED morse_cmd_resp_hmi_create_link
+{
+};
+
+enum morse_cmd_hmi_trigger_type
+{
+    MORSE_CMD_HMI_TRIGGER_TYPE_GPIO = 1,
+};
+
+/**
+ * GPIO trigger parameters, cast from param_buff when trigger_type is
+ * MORSE_CMD_HMI_TRIGGER_TYPE_GPIO.
+ */
+struct PACKED morse_cmd_hmi_trigger_params_gpio
+{
+    /** GPIO number for this trigger. */
+    uint8_t gpio;
+    /** Debounce duration in milliseconds. */
+    __le32 debounce_ms;
+    /** Enable/disable pullup. */
+    uint8_t pullup;
+    /** Type of edge (rising or falling). */
+    uint8_t edge;
+};
+
+/**
+ * @brief Request message for HMI_CREATE_TRIGGER
+ *
+ * Configure HMI trigger.
+ */
+struct PACKED morse_cmd_req_hmi_create_trigger
+{
+    /** Trigger type (morse_cmd_hmi_trigger_type). */
+    uint8_t trigger_type;
+    /** Length of trigger params. */
+    __le16 param_len;
+    /** Trigger parameter buffer (layout determined by trigger_type). */
+    uint8_t param_buff[];
+};
+
+/**
+ * @brief Response message for HMI_CREATE_TRIGGER
+ */
+struct PACKED morse_cmd_resp_hmi_create_trigger
+{
+    /** ID of the trigger that was just created. */
+    uint8_t trigger_id;
+};
+
+enum morse_cmd_hmi_action_type
+{
+    MORSE_CMD_HMI_ACTION_TYPE_STANDBY_EXIT = 1,
+};
+
+/**
+ * @brief Request message for HMI_CREATE_ACTION
+ *
+ * Configure HMI action.
+ */
+struct PACKED morse_cmd_req_hmi_create_action
+{
+    /** Action type (morse_cmd_hmi_action_type). */
+    uint8_t action_type;
+    /** Length of action params. */
+    __le16 param_len;
+    /** Action parameter buffer (layout determined by action_type). */
+    uint8_t param_buff[];
+};
+
+/**
+ * @brief Response message for HMI_CREATE_ACTION
+ */
+struct PACKED morse_cmd_resp_hmi_create_action
+{
+    /** ID of the action that was just created. */
+    uint8_t action_id;
 };
 
 /**

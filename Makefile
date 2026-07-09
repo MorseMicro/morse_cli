@@ -14,7 +14,7 @@ Q = @
 endif
 
 
-override MORSECTRL_VERSION_STRING = "rel_mm6108_2_0_1_2026_Jun_11"
+override MORSECTRL_VERSION_STRING = "rel_mm8108_2_0_0_2026_Apr_21"
 DEFAULT_INTERFACE_NAME ?= "wlan0"
 PKG_CONFIG ?= pkg-config
 
@@ -80,6 +80,7 @@ SRCS += tcp_periodic.c
 SRCS += tx_polar.c
 SRCS += medium_eval.c
 SRCS += connect.c
+SRCS += hmi.c
 SRCS += $(STATS_DECODER_SRCS)
 
 SRCS += transport/transport.c
