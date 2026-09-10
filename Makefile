@@ -14,7 +14,7 @@ Q = @
 endif
 
 
-override MORSECTRL_VERSION_STRING = "rel_mm6108_2_1_1_2026_Jul_29"
+override MORSECTRL_VERSION_STRING = "rel_mm8108_2_1_0_2026_Jul_01"
 DEFAULT_INTERFACE_NAME ?= "wlan0"
 PKG_CONFIG ?= pkg-config
 

@@ -20,7 +20,7 @@
 #define PACKED                 __attribute__((packed))
 
 #define MORSE_CMD_SEMVER_MAJOR 57
-#define MORSE_CMD_SEMVER_MINOR 11
+#define MORSE_CMD_SEMVER_MINOR 13
 #define MORSE_CMD_SEMVER_PATCH 0
 
 #define MORSE_CMD_TYPE_REQ     BIT(0)
@@ -818,9 +818,11 @@ enum morse_cmd_standby_mode_exit_reason
     MORSE_CMD_STANDBY_MODE_EXIT_REASON_HW_SCAN_NOT_ENABLED = 6,
     /** HW scan failed to start */
     MORSE_CMD_STANDBY_MODE_EXIT_REASON_HW_SCAN_FAILED_TO_START = 7,
+    /** Connection to a server was lost */
+    MORSE_CMD_STANDBY_MODE_EXIT_REASON_SERVER_CONNECTION_LOST = 8,
     /** Max exit reason enum value */
     MORSE_CMD_STANDBY_MODE_EXIT_REASON_MAX =
-        MORSE_CMD_STANDBY_MODE_EXIT_REASON_HW_SCAN_FAILED_TO_START,
+        MORSE_CMD_STANDBY_MODE_EXIT_REASON_SERVER_CONNECTION_LOST + 1,
 };
 
 enum morse_cmd_ieee80211_sta_state
@@ -1273,8 +1275,8 @@ struct PACKED morse_cmd_req_tcp_periodic
 struct PACKED morse_cmd_req_rtc
 {
     /**
-     * microseconds since the POSIX Epoch (1970-01-01 00:00:00 +0000 (UTC)).  Only used when write
-     * is set to 1
+     * microseconds since the POSIX Epoch (1970-01-01 00:00:00 +0000 (UTC)). Only used when write is
+     * set to 1
      */
     __le64 epoch_time_us;
     /** Set to 1 to update the real-time clock, or 0 to read the current value */
@@ -1316,6 +1318,14 @@ enum morse_cmd_hmi_trigger_type
 {
     MORSE_CMD_HMI_TRIGGER_TYPE_GPIO = 1,
     MORSE_CMD_HMI_TRIGGER_TYPE_USER = 2,
+    MORSE_CMD_HMI_TRIGGER_TYPE_LINK_STATE = 3,
+};
+
+enum morse_cmd_hmi_link_state_transition
+{
+    MORSE_CMD_HMI_LINK_STATE_TRANSITION_UP = 1,
+    MORSE_CMD_HMI_LINK_STATE_TRANSITION_DOWN = 2,
+    MORSE_CMD_HMI_LINK_STATE_TRANSITION_BOTH = 3,
 };
 
 /**
@@ -1332,6 +1342,18 @@ struct PACKED morse_cmd_hmi_trigger_params_gpio
     uint8_t pullup;
     /** Type of edge (rising or falling). */
     uint8_t edge;
+};
+
+/**
+ * Link-state trigger parameters, cast from param_buff when trigger_type is
+ * MORSE_CMD_HMI_TRIGGER_TYPE_LINK_STATE.
+ */
+struct PACKED morse_cmd_hmi_trigger_params_link_state
+{
+    /**
+     * State transition to fire this trigger on. See @ref{enum morse_cmd_hmi_link_state_transition}.
+     */
+    uint8_t link_state_transition;
 };
 
 /**

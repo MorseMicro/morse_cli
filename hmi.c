@@ -28,6 +28,7 @@ static struct
 } trigger_args;
 static struct mm_argtable trigger_gpio;
 static struct mm_argtable trigger_user;
+static struct mm_argtable trigger_link_state;
 
 static struct
 {
@@ -54,6 +55,12 @@ static struct
 
 static struct
 {
+    struct arg_lit *up;
+    struct arg_lit *down;
+} link_state_args;
+
+static struct
+{
     struct arg_int *id1;
     struct arg_int *id2;
 } link_args;
@@ -67,6 +74,7 @@ static struct
 static struct mm_argtable *subcmds[] = { &trigger,
                                          &trigger_gpio,
                                          &trigger_user,
+                                         &trigger_link_state,
                                          &action,
                                          &action_standby_exit,
                                          &action_user_action,
@@ -95,9 +103,15 @@ int hmi_init(struct morsectrl *mors, struct mm_argtable *mm_args)
     MM_INIT_ARGTABLE(
         &trigger,
         "HMI trigger creation",
-        trigger_args.subcmd = arg_rex1(NULL, NULL, "(gpio|user)", "{gpio|user}", 0, "Trigger type"),
-        arg_rem(NULL, "gpio  - GPIO edge trigger"),
-        arg_rem(NULL, "user  - Software-fired user trigger"));
+        trigger_args.subcmd = arg_rex1(NULL,
+                                       NULL,
+                                       "(gpio|user|link_state)",
+                                       "{gpio|user|link_state}",
+                                       0,
+                                       "Trigger type"),
+        arg_rem(NULL, "gpio       - GPIO edge trigger"),
+        arg_rem(NULL, "user       - Software-fired user trigger"),
+        arg_rem(NULL, "link_state - Link state transition trigger"));
     trigger_args.subcmd->hdr.flag |= ARG_STOPPARSE;
 
     MM_INIT_ARGTABLE(
@@ -120,6 +134,13 @@ int hmi_init(struct morsectrl *mors, struct mm_argtable *mm_args)
                                   "Edge trigger type (default: rising)"));
 
     MM_INIT_ARGTABLE(&trigger_user, "Software-fired user trigger");
+
+    MM_INIT_ARGTABLE(
+        &trigger_link_state,
+        "Link state transition trigger",
+        link_state_args.up = arg_lit0("u", "up", "Fire when the link comes up (default)"),
+        link_state_args.down = arg_lit0("d", "down", "Fire when the link goes down"),
+        arg_rem(NULL, "Use both -u and -d to fire when the link goes up or down."));
 
     MM_INIT_ARGTABLE(&action,
                      "HMI action creation",
@@ -231,6 +252,38 @@ static int hmi_trigger_gpio(struct morse_cmd_req_hmi_create_trigger *req, int ar
     return 0;
 }
 
+static int hmi_trigger_link_state(struct morse_cmd_req_hmi_create_trigger *req,
+                                  int argc,
+                                  char *argv[])
+{
+    int ret = mm_parse_argtable("hmi create_trigger link_state", &trigger_link_state, argc, argv);
+    if (ret)
+    {
+        return -1;
+    }
+
+    struct morse_cmd_hmi_trigger_params_link_state *params =
+        (struct morse_cmd_hmi_trigger_params_link_state *)req->param_buff;
+
+    if (link_state_args.down->count > 0)
+    {
+        if (link_state_args.up->count > 0)
+        {
+            params->link_state_transition = MORSE_CMD_HMI_LINK_STATE_TRANSITION_BOTH;
+        }
+        else
+        {
+            params->link_state_transition = MORSE_CMD_HMI_LINK_STATE_TRANSITION_DOWN;
+        }
+    }
+    else
+    {
+        params->link_state_transition = MORSE_CMD_HMI_LINK_STATE_TRANSITION_UP;
+    }
+
+    return 0;
+}
+
 static int process_hmi_trigger(struct morsectrl *mors, int argc, char *argv[])
 {
     struct morse_cmd_req_hmi_create_trigger *req;
@@ -258,6 +311,12 @@ static int process_hmi_trigger(struct morsectrl *mors, int argc, char *argv[])
         trigger_type = MORSE_CMD_HMI_TRIGGER_TYPE_USER;
         param_size = 0;
         trigger_type_parser = hmi_trigger_user;
+    }
+    else if (strcmp("link_state", trigger_args.subcmd->sval[0]) == 0)
+    {
+        trigger_type = MORSE_CMD_HMI_TRIGGER_TYPE_LINK_STATE;
+        param_size = sizeof(struct morse_cmd_hmi_trigger_params_link_state);
+        trigger_type_parser = hmi_trigger_link_state;
     }
     else
     {

@@ -111,7 +111,10 @@ int standby_init(struct morsectrl *mors, struct mm_argtable *mm_args)
                         arg_rem(NULL, "2 - association lost"),
                         arg_rem(NULL, "3 - external input pin fired"),
                         arg_rem(NULL, "4 - whitelisted packet received"),
-                        arg_rem(NULL, "6 - TCP connection lost"),
+                        arg_rem(NULL, "5 - TCP connection lost"),
+                        arg_rem(NULL, "6 - HW scan not enabled"),
+                        arg_rem(NULL, "7 - HW scan failed to start"),
+                        arg_rem(NULL, "8 - Server connection lost"),
                         arg_rem(NULL, "A message is printed in the following format."),
                         arg_rem(NULL, "Standby mode exited with reason <code> - <description>"),
         exit_args.json_format = arg_lit0("j", "json", "Print the exit message in JSON format"));
@@ -875,6 +878,8 @@ static const char *standby_exit_reason_to_str(int reason)
         return "HW scan not enabled";
     case MORSE_CMD_STANDBY_MODE_EXIT_REASON_HW_SCAN_FAILED_TO_START:
         return "HW scan failed to start";
+    case MORSE_CMD_STANDBY_MODE_EXIT_REASON_SERVER_CONNECTION_LOST:
+        return "Server connection lost";
     default:
         return "unknown";
     }
