@@ -51,8 +51,6 @@ struct __attribute__((packed)) statistics_offchip_data {
     stats_tlv_tag_t tag;
 };
 
-#define OLD_STATS_COMMAND_MASK 0xDF
-
 struct statistics_offchip_data *get_stats_offchip(const struct morsectrl *mors,
                                                     stats_tlv_tag_t tag);
 bool get_signed_value_as_int64(const uint8_t *buf, uint32_t size, int64_t *value);

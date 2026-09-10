@@ -273,6 +273,26 @@ struct param_entry params[] = {
         .set_fn = param_set_uint32,
         .get_fn = param_get_uint32,
     },
+    {
+        .id = MORSE_CMD_PARAM_ID_SCAN_INTERVAL_BASE_S,
+        .name = "scan_interval_base_s",
+        .help = "Base interval between scans when reconnecting (in seconds). "
+                "Only applicable to FullMAC firmware.",
+        .min_val = 0,
+        .max_val = UINT32_MAX,
+        .set_fn = param_set_uint32,
+        .get_fn = param_get_uint32,
+    },
+    {
+        .id = MORSE_CMD_PARAM_ID_SCAN_INTERVAL_LIMIT_S,
+        .name = "scan_interval_limit_s",
+        .help = "Maximum interval between scans when reconnecting (in seconds). "
+                "Only applicable to FullMAC firmware.",
+        .min_val = 0,
+        .max_val = UINT32_MAX,
+        .set_fn = param_set_uint32,
+        .get_fn = param_get_uint32,
+    },
 };
 
 static int get_line(const char **start, const char *end)

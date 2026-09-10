@@ -638,6 +638,10 @@ static int process_standby_enter(struct morsectrl *mors,
         mctrl_print("pri 1mhz idx %d\n", ch_cmd->pri_1mhz_chan_idx);
     }
 
+    ch_cmd->dot11_mode = MORSE_CMD_DOT11_PROTO_MODE_AH;
+    ch_cmd->__deprecated_reg_tx_power_set = 1;
+    ch_cmd->is_off_channel = 0;
+
     /* Set the channel before we go to sleep */
     ret = morsectrl_send_command(mors->transport, MORSE_CMD_ID_SET_CHANNEL,
                                  cmd_tbuff, rsp_tbuff);

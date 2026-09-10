@@ -20,7 +20,7 @@
 #define PACKED                 __attribute__((packed))
 
 #define MORSE_CMD_SEMVER_MAJOR 57
-#define MORSE_CMD_SEMVER_MINOR 3
+#define MORSE_CMD_SEMVER_MINOR 11
 #define MORSE_CMD_SEMVER_PATCH 0
 
 #define MORSE_CMD_TYPE_REQ     BIT(0)
@@ -64,11 +64,13 @@ enum morse_cmd_id
     MORSE_CMD_ID_FORCE_POWER_MODE = 0x0048,
     MORSE_CMD_ID_NET_IP = 0x004D,
     MORSE_CMD_ID_TCP_PERIODIC = 0x004E,
+    MORSE_CMD_ID_RTC = 0x0055,
 
     /* HMI commands starting at 0x0780 */
     MORSE_CMD_ID_HMI_CREATE_LINK = 0x0780,
     MORSE_CMD_ID_HMI_CREATE_TRIGGER = 0x0781,
     MORSE_CMD_ID_HMI_CREATE_ACTION = 0x0782,
+    MORSE_CMD_ID_HMI_FIRE_TRIGGER = 0x0783,
 
     /* Stats commands starting at 0x2000 */
     MORSE_CMD_ID_HOST_STATS_LOG = 0x2007,
@@ -111,9 +113,6 @@ enum morse_cmd_id
     MORSE_CMD_ID_GET_SET_GENERIC_PARAM = 0x003E,
 
     /* Deprecated commands - do not use */
-    MORSE_CMD_ID_HOST_STATS_LOG_DEPRECATED = 0x0007,
-    MORSE_CMD_ID_MAC_STATS_LOG_DEPRECATED = 0x000C,
-    MORSE_CMD_ID_UPHY_STATS_LOG_DEPRECATED = 0x000E,
     MORSE_CMD_ID_BLOCKACK = 0x0017,
     MORSE_CMD_ID_CFG_ACI_SCAN = 0x001F,
     MORSE_CMD_ID_START_SAMPLE_PLAY = 0x8002,
@@ -1267,6 +1266,33 @@ struct PACKED morse_cmd_req_tcp_periodic
 };
 
 /**
+ * @brief Request message for RTC
+ *
+ * Request message for managing the RTC (Real Time Clock)
+ */
+struct PACKED morse_cmd_req_rtc
+{
+    /**
+     * microseconds since the POSIX Epoch (1970-01-01 00:00:00 +0000 (UTC)).  Only used when write
+     * is set to 1
+     */
+    __le64 epoch_time_us;
+    /** Set to 1 to update the real-time clock, or 0 to read the current value */
+    uint8_t write;
+};
+
+/**
+ * @brief Response message for RTC
+ *
+ * Response message for reading the RTC (Real Time Clock)
+ */
+struct PACKED morse_cmd_resp_rtc
+{
+    /** Current microseconds since the POSIX Epoch (1970-01-01 00:00:00 +0000 (UTC)) */
+    __le64 epoch_time_us;
+};
+
+/**
  * @brief Request message for HMI_CREATE_LINK
  *
  * Link a trigger and an action in the HMI subsystem.
@@ -1289,6 +1315,7 @@ struct PACKED morse_cmd_resp_hmi_create_link
 enum morse_cmd_hmi_trigger_type
 {
     MORSE_CMD_HMI_TRIGGER_TYPE_GPIO = 1,
+    MORSE_CMD_HMI_TRIGGER_TYPE_USER = 2,
 };
 
 /**
@@ -1331,9 +1358,48 @@ struct PACKED morse_cmd_resp_hmi_create_trigger
     uint8_t trigger_id;
 };
 
+/**
+ * Maximum number of entries in morse_cmd_hmi_action_params_gpio_pattern::durations_ms and
+ * ::intensities.
+ */
+#define MORSE_CMD_HMI_GPIO_PATTERN_MAX_ENTRIES 16
+
 enum morse_cmd_hmi_action_type
 {
     MORSE_CMD_HMI_ACTION_TYPE_STANDBY_EXIT = 1,
+    MORSE_CMD_HMI_ACTION_TYPE_USER = 2,
+    MORSE_CMD_HMI_ACTION_TYPE_GPIO_PATTERN = 3,
+};
+
+/**
+ * GPIO pattern action parameters, cast from param_buff when action_type is
+ * MORSE_CMD_HMI_ACTION_TYPE_GPIO_PATTERN. Mirrors struct gpio_output_pattern.
+ */
+struct PACKED morse_cmd_hmi_action_params_gpio_pattern
+{
+    /** Supported versions: 1 */
+    uint8_t version;
+    /** GPIO number to drive with the pattern. */
+    uint8_t gpio;
+    /** Padding */
+    uint8_t reserved[2];
+    /**
+     * Number of valid entries in durations_ms and intensities. 0 = empty pattern (cancels any
+     * active pattern on the pin and leaves the pin at its current level).
+     */
+    __le32 count;
+    /**
+     * Number of times to repeat the array. 0 = repeat forever. At the end of the final cycle, the
+     * pin stays at whatever intensities the last entry set.
+     */
+    __le32 repeat;
+    /**
+     * Per-entry hold time (ms). A zero entry means "drive intensities[i] and immediately advance to
+     * the next entry without arming a timer."
+     */
+    __le32 durations_ms[MORSE_CMD_HMI_GPIO_PATTERN_MAX_ENTRIES];
+    /** Per-entry drive level, parallel to durations_ms: 0 = drive low, >= 1 = drive high. */
+    uint8_t intensities[MORSE_CMD_HMI_GPIO_PATTERN_MAX_ENTRIES];
 };
 
 /**
@@ -1358,6 +1424,24 @@ struct PACKED morse_cmd_resp_hmi_create_action
 {
     /** ID of the action that was just created. */
     uint8_t action_id;
+};
+
+/**
+ * @brief Request message for HMI_FIRE_TRIGGER
+ *
+ * Fire the specified trigger.
+ */
+struct PACKED morse_cmd_req_hmi_fire_trigger
+{
+    /** ID of the trigger to fire. */
+    uint8_t trigger_id;
+};
+
+/**
+ * @brief Response message for HMI_FIRE_TRIGGER
+ */
+struct PACKED morse_cmd_resp_hmi_fire_trigger
+{
 };
 
 /**
@@ -1867,7 +1951,12 @@ enum morse_cmd_param_id
     MORSE_CMD_PARAM_ID_AUTOCONNECT = 31,
     MORSE_CMD_PARAM_ID_HOST_PWR_OFF_GPIO = 32,
     MORSE_CMD_PARAM_ID_HOST_PWR_OFF_GPIO_PULSE_MS = 33,
-    MORSE_CMD_PARAM_ID_LAST = 34,
+    MORSE_CMD_PARAM_ID_ALLOW_PRE_ASSOC_OFF_CHAN_PS = 34,
+    /** Base interval between scans when reconnecting (FullMAC only). */
+    MORSE_CMD_PARAM_ID_SCAN_INTERVAL_BASE_S = 35,
+    /** Maximum interval between scans when reconnecting (FullMAC only). */
+    MORSE_CMD_PARAM_ID_SCAN_INTERVAL_LIMIT_S = 36,
+    MORSE_CMD_PARAM_ID_LAST = 37,
 };
 
 /**

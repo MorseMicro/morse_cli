@@ -119,19 +119,6 @@ int morsectrl_stats_cmd(struct morsectrl *mors, int cmd, int reset, enum format_
     ret = morsectrl_send_command(mors->transport, cmd, cmd_tbuff, rsp_tbuff);
     resp_sz = rsp_tbuff->data_len - sizeof(struct response);
 
-    if (ret)
-    {
-        /* Try the deprecated command */
-        ret = morsectrl_send_command(mors->transport, OLD_STATS_COMMAND_MASK & cmd,
-                                     cmd_tbuff, rsp_tbuff);
-        resp_sz = rsp_tbuff->data_len - sizeof(struct response);
-        if (!reset && !ret)
-        {
-            mctrl_print("%s", resp->stats);
-        }
-        goto exit;
-    }
-
     if (!reset && !ret)
     {
         ret = statistics_data_decode(mors, format_val, (uint8_t *)resp->stats, (size_t) resp_sz);
